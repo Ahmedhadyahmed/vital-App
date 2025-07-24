@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+
 import '../widgets/glassy_input_field.dart';
 import '../widgets/gradient_button.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -51,15 +62,61 @@ class RegisterScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 30),
-                          const GlassyInputField(icon: Icons.person, hint: 'Username'),
+                          GlassyInputField(
+                            icon: Icons.person,
+                            hint: 'Username',
+                            controller: _usernameController,
+                          ),
                           const SizedBox(height: 20),
-                          const GlassyInputField(icon: Icons.email, hint: 'Email'),
+                          GlassyInputField(
+                            icon: Icons.email,
+                            hint: 'Email',
+                            controller: _emailController,
+                          ),
                           const SizedBox(height: 20),
-                          const GlassyInputField(icon: Icons.lock, hint: 'Password', isPassword: true),
+                          GlassyInputField(
+                            icon: Icons.lock,
+                            hint: 'Password',
+                            isPassword: true,
+                            controller: _passwordController,
+                          ),
                           const SizedBox(height: 20),
-                          const GlassyInputField(icon: Icons.lock, hint: 'Confirm Password', isPassword: true),
+                          GlassyInputField(
+                            icon: Icons.lock,
+                            hint: 'Confirm Password',
+                            isPassword: true,
+                            controller: _confirmPasswordController,
+                          ),
                           const SizedBox(height: 20),
-                          const GradientButton(text: 'Register'),
+                          GradientButton(
+                            text: 'Register',
+                            onPressed: () {
+                              final username = _usernameController.text;
+                              final email = _emailController.text;
+                              final password = _passwordController.text;
+                              final confirmPassword = _confirmPasswordController.text;
+
+                              if (username.isEmpty ||
+                                  email.isEmpty ||
+                                  password.isEmpty ||
+                                  confirmPassword.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Please fill in all fields')),
+                                );
+                                return;
+                              }
+
+                              if (password != confirmPassword) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Passwords do not match')),
+                                );
+                                return;
+                              }
+
+                              // TODO: Add your actual registration logic here
+                              print('Registering user: $username, $email');
+                            },
+                          ),
                           const SizedBox(height: 20),
                           Row(
                             children: const [
@@ -107,5 +164,14 @@ class RegisterScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 }

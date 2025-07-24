@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'note_reminder.dart'; // Import your note_reminder screen
+import 'package:vital/screens/payment_mehods.dart';
+import 'package:vital/screens/privacy_policy.dart';
+import 'package:vital/screens/login_screen.dart';
+import 'package:vital/screens/note_reminder.dart';
+import 'Emergency.dart';
+import 'Help & Support.dart';
+import 'MedicationsScreen.dart';
+import 'Settings.dart'; // Add this import
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -134,7 +141,7 @@ class HomePage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              SizedBox(height: 200, child: _buildGlucoseChart()), // Increased height for horizontal chart
+              SizedBox(height: 200, child: _buildGlucoseChart()),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -189,7 +196,6 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildGlucoseChart() {
-    // Added multiple readings to test the graph with different values
     final values = [110, 140, 130, 112, 98, 105, 120, 115, 125, 118, 130, 140, 110, 95, 105];
     final maxValue = values.reduce((a, b) => a > b ? a : b).toDouble();
     final minValue = values.reduce((a, b) => a < b ? a : b).toDouble();
@@ -198,9 +204,9 @@ class HomePage extends StatelessWidget {
   }
 
   Color _getStatusColor(double value) {
-    if (value < 70) return const Color(0xFF212121);    // Dark for low
-    if (value > 180) return const Color(0xFF424242);   // Gray for high
-    return const Color(0xFF036E41);                    // Main green for normal
+    if (value < 70) return const Color(0xFF212121);
+    if (value > 180) return const Color(0xFF424242);
+    return const Color(0xFF036E41);
   }
 
   String _getStatusText(double value) {
@@ -266,13 +272,13 @@ class HomePage extends StatelessWidget {
   Color _getNoteIconColor(String noteTitle) {
     switch (noteTitle.toLowerCase()) {
       case 'breakfast':
-        return const Color(0xFF389C7B);  // Light green
+        return const Color(0xFF389C7B);
       case 'medication':
-        return const Color(0xFF036E41);  // Dark green
+        return const Color(0xFF036E41);
       case 'exercise':
-        return const Color(0xFF424242);  // Gray
+        return const Color(0xFF424242);
       default:
-        return const Color(0xFF757575);  // Light gray
+        return const Color(0xFF757575);
     }
   }
 }
@@ -319,24 +325,20 @@ class HorizontalGlucoseChartPainter extends CustomPainter {
     final height = size.height;
     final valueRange = maxValue - minValue;
 
-    // Convert values to points (horizontal orientation)
     final points = values.asMap().entries.map((entry) {
       final i = entry.key;
       final value = entry.value;
-      final y = (height / (values.length - 1)) * i; // Time progresses vertically
-      final x = ((value - minValue) / valueRange) * width; // Glucose values horizontally
+      final y = (height / (values.length - 1)) * i;
+      final x = ((value - minValue) / valueRange) * width;
       return Offset(x, y);
     }).toList();
 
-    // Create curved path using cubic bezier curves
     if (points.isNotEmpty) {
       path.moveTo(points.first.dx, points.first.dy);
 
       for (int i = 0; i < points.length - 1; i++) {
         final currentPoint = points[i];
         final nextPoint = points[i + 1];
-
-        // Calculate control points for smooth curve (adjusted for horizontal orientation)
         final controlPointDistance = (nextPoint.dy - currentPoint.dy) * 0.4;
 
         final controlPoint1 = Offset(
@@ -349,7 +351,6 @@ class HorizontalGlucoseChartPainter extends CustomPainter {
           nextPoint.dy - controlPointDistance,
         );
 
-        // Create cubic bezier curve
         path.cubicTo(
           controlPoint1.dx, controlPoint1.dy,
           controlPoint2.dx, controlPoint2.dy,
@@ -358,23 +359,19 @@ class HorizontalGlucoseChartPainter extends CustomPainter {
       }
     }
 
-    // Create fill path for gradient area (fill from left edge)
     final fillPath = Path.from(path)
       ..lineTo(0, points.last.dy)
       ..lineTo(0, points.first.dy)
       ..close();
 
-    // Draw fill area and curved line
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
 
-    // Draw data points
     for (final point in points) {
       canvas.drawCircle(point, pointRadius, pointPaint);
       canvas.drawCircle(point, pointRadius, pointBorderPaint);
     }
 
-    // Draw vertical grid lines (for glucose values)
     final guidePaint = Paint()
       ..color = const Color(0xFF389C7B).withOpacity(0.2)
       ..strokeWidth = 1;
@@ -383,9 +380,6 @@ class HorizontalGlucoseChartPainter extends CustomPainter {
       final x = width * i / 4;
       canvas.drawLine(Offset(x, 0), Offset(x, height), guidePaint);
     }
-
-    // Note: Text labels removed to avoid TextDirection compatibility issues
-    // The chart itself clearly shows the glucose trend horizontally
   }
 
   @override
@@ -435,15 +429,31 @@ class _AppDrawer extends StatelessWidget {
           _buildDrawerItem(context, Icons.dashboard_rounded, "Dashboard", true, null),
           _buildDrawerItem(context, Icons.bar_chart_rounded, "Statistics", false, null),
           _buildDrawerItem(context, Icons.note_rounded, "Notes", false, () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const NoteReminderPage()),
-            );
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NoteReminderPage()));
           }),
-          _buildDrawerItem(context, Icons.medication_rounded, "Medications", false, null),
-          _buildDrawerItem(context, Icons.settings_rounded, "Settings", false, null),
+          _buildDrawerItem(context, Icons.medication_rounded, "Medications", false, () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const MedicationsScreen()));
+          }),
+          // Added Emergency Contacts button
+          _buildDrawerItem(context, Icons.emergency, "Emergency Contacts", false, () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EmergencyContactsScreen()));
+          }),
+          _buildDrawerItem(context, Icons.payment_rounded, "Payment Methods", false, () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PaymentMethodsPage()));
+          }),
+          _buildDrawerItem(context, Icons.privacy_tip_rounded, "Privacy Policy", false, () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()));
+          }),
+          _buildDrawerItem(context, Icons.settings_rounded, "Settings", false, () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SettingsScreen()));
+          }),
           const Divider(height: 32, color: Color(0xFFE0E0E0)),
-          _buildDrawerItem(context, Icons.help_rounded, "Help & Support", false, null),
-          _buildDrawerItem(context, Icons.logout_rounded, "Logout", false, null),
+          _buildDrawerItem(context, Icons.help_rounded, "Help & Support", false, () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const HelpSupportScreen()));
+          }),
+          _buildDrawerItem(context, Icons.logout_rounded, "Logout", false, () {
+            Navigator.pushReplacementNamed(context, '/login');
+          }),
         ],
       ),
     );

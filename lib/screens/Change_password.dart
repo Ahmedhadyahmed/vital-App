@@ -2,49 +2,67 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../widgets/glassy_input_field.dart';
 import '../widgets/gradient_button.dart';
-import 'number confirmation.dart';
-import 'register_screen.dart';
-import 'home_page.dart';
- // Add this import
+import 'login_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ResetPasswordScreen extends StatefulWidget {
+  const ResetPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final TextEditingController _codeController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
-  String? _usernameError;
+  String? _codeError;
   String? _passwordError;
+  String? _confirmPasswordError;
 
-  void _login() {
+  void _resetPassword() {
     setState(() {
-      _usernameError = null;
+      _codeError = null;
       _passwordError = null;
+      _confirmPasswordError = null;
     });
 
-    final username = _usernameController.text;
-    final password = _passwordController.text;
+    final code = _codeController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
-    if (username != 'admin') {
+    if (code.isEmpty) {
       setState(() {
-        _usernameError = 'Non-existing username';
+        _codeError = 'Please enter the verification code';
       });
       return;
     }
 
-    if (password != 'admin') {
+    if (newPassword.isEmpty) {
       setState(() {
-        _passwordError = 'Password is incorrect';
+        _passwordError = 'Please enter a new password';
       });
       return;
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+    if (newPassword.length < 6) {
+      setState(() {
+        _passwordError = 'Password must be at least 6 characters';
+      });
+      return;
+    }
+
+    if (confirmPassword != newPassword) {
+      setState(() {
+        _confirmPasswordError = 'Passwords do not match';
+      });
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
   }
 
   @override
@@ -85,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                               children: [
                                 Text(
-                                  'Welcome back!',
+                                  'Reset Password',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
@@ -94,25 +112,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'Welcome back we missed you too much',
+                                  'Enter the code you received and set a new password',
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 14,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(height: 30),
-                          if (_usernameError != null)
+                          if (_codeError != null)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Text(_usernameError!, style: const TextStyle(color: Colors.red)),
+                              child: Text(_codeError!, style: const TextStyle(color: Colors.red)),
                             ),
                           GlassyInputField(
-                            icon: Icons.person,
-                            hint: 'Username',
-                            controller: _usernameController,
+                            icon: Icons.confirmation_number,
+                            hint: 'Verification Code',
+                            controller: _codeController,
+                            keyboardType: TextInputType.number,
                           ),
                           const SizedBox(height: 20),
                           if (_passwordError != null)
@@ -122,57 +142,38 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           GlassyInputField(
                             icon: Icons.key,
-                            hint: 'Password',
+                            hint: 'New Password',
                             isPassword: true,
-                            controller: _passwordController,
+                            controller: _newPasswordController,
                           ),
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // Navigate to ForgotPasswordScreen
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
-                                );
-                              },
-                              child: const Text('Forgot Password?', style: TextStyle(color: Colors.white70)),
+                          const SizedBox(height: 20),
+                          if (_confirmPasswordError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Text(_confirmPasswordError!, style: const TextStyle(color: Colors.red)),
                             ),
+                          GlassyInputField(
+                            icon: Icons.key,
+                            hint: 'Confirm New Password',
+                            isPassword: true,
+                            controller: _confirmPasswordController,
                           ),
-                          const SizedBox(height: 10),
-                          GradientButton(text: 'Login', onPressed: _login),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: const [
-                              Expanded(child: Divider(color: Colors.white38)),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10.0),
-                                child: Text('Or continue with', style: TextStyle(color: Colors.white54)),
-                              ),
-                              Expanded(child: Divider(color: Colors.white38)),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: const [
-                              Icon(Icons.g_mobiledata, size: 32, color: Colors.white),
-                              Icon(Icons.apple, size: 28, color: Colors.white),
-                              Icon(Icons.facebook, size: 28, color: Colors.white),
-                            ],
-                          ),
+                          const SizedBox(height: 30),
+                          GradientButton(text: 'Reset Password', onPressed: _resetPassword),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("Don't have an account? ", style: TextStyle(color: Colors.white70)),
+                              const Text("Remembered your password? ", style: TextStyle(color: Colors.white70)),
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                  );
                                 },
                                 child: const Text(
-                                  'Register Now',
+                                  'Login',
                                   style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
                                 ),
                               ),
