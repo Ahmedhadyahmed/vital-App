@@ -4,6 +4,7 @@ import 'AppThemeScreen.dart';
 import 'LanguageSettingsScreen.dart';
 import 'NotificationSettingsScreen.dart';
 import 'ProfileInfoScreen.dart';
+import 'number confirmation.dart'; // Add this import
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -53,7 +54,12 @@ class SettingsScreen extends StatelessWidget {
             _buildSettingsItem(
               icon: Icons.lock_outline,
               title: 'Change Password',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                );
+              },
             ),
 
             const SizedBox(height: 24),

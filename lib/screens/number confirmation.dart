@@ -3,6 +3,7 @@ import 'dart:ui';
 import '../widgets/glassy_input_field.dart';
 import '../widgets/gradient_button.dart';
 import 'Change_password.dart';
+import 'login_screen.dart'; // Add this import
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -112,7 +113,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             children: [
                               const Text("Remember your password? ", style: TextStyle(color: Colors.white70)),
                               GestureDetector(
-                                onTap: () => Navigator.pop(context),
+                                onTap: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                  );
+                                },
                                 child: const Text(
                                   'Login',
                                   style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
