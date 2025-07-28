@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:vital/screens/note_reminder.dart';
 
@@ -10,11 +9,9 @@ class NotesListScreen extends StatefulWidget {
   State<NotesListScreen> createState() => _NotesListScreenState();
 }
 
-class _NotesListScreenState extends State<NotesListScreen> with TickerProviderStateMixin {
+class _NotesListScreenState extends State<NotesListScreen> {
   String _selectedFilter = 'All';
   final List<String> _filterOptions = ['All', 'Today', 'Upcoming', 'Completed'];
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
 
   // Sample notes data - you can replace this with your actual data source
   final List<NoteItem> _notes = [
@@ -26,7 +23,6 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       scheduledDate: DateTime.now().add(const Duration(hours: 2)),
       isCompleted: false,
       priority: NotePriority.high,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
     NoteItem(
       id: '2',
@@ -36,7 +32,6 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       scheduledDate: DateTime.now().add(const Duration(days: 3)),
       isCompleted: false,
       priority: NotePriority.medium,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
     NoteItem(
       id: '3',
@@ -46,7 +41,6 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       scheduledDate: DateTime.now().subtract(const Duration(hours: 1)),
       isCompleted: true,
       priority: NotePriority.low,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
     NoteItem(
       id: '4',
@@ -56,7 +50,6 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       scheduledDate: DateTime.now().add(const Duration(hours: 4)),
       isCompleted: false,
       priority: NotePriority.high,
-      createdAt: DateTime.now(),
     ),
     NoteItem(
       id: '5',
@@ -66,7 +59,6 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       scheduledDate: DateTime.now().add(const Duration(days: 1)),
       isCompleted: false,
       priority: NotePriority.low,
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
     ),
     NoteItem(
       id: '6',
@@ -76,36 +68,13 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       scheduledDate: DateTime.now().add(const Duration(days: 7)),
       isCompleted: false,
       priority: NotePriority.medium,
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
     ),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   List<NoteItem> get _filteredNotes {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
 
     switch (_selectedFilter) {
       case 'Today':
@@ -142,53 +111,19 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
         );
       }
     });
-    HapticFeedback.lightImpact();
   }
 
   void _deleteNote(String noteId) {
     setState(() {
       _notes.removeWhere((note) => note.id == noteId);
     });
-    HapticFeedback.heavyImpact();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Note deleted',
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: const Color(0xFFEF4444),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+      const SnackBar(
+        content: Text('Note deleted'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
       ),
     );
-  }
-
-  void _navigateToCreateNote() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const NoteReminderPage(),
-      ),
-    );
-
-    if (result == true) {
-      setState(() {});
-    }
-  }
-
-  void _navigateToEditNote(NoteItem note) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NoteReminderPage(existingNote: note),
-      ),
-    );
-
-    if (result == true) {
-      setState(() {});
-    }
   }
 
   @override
@@ -198,108 +133,186 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
     final totalCount = _notes.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF8F9F8),
       appBar: AppBar(
         title: const Text(
           'My Notes',
           style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 24,
-            color: Color(0xFF1A1A1A),
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            color: Color(0xFF212121),
           ),
         ),
-        backgroundColor: const Color(0xFFF7F9FC),
-        foregroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFF212121),
         elevation: 0,
-        centerTitle: false,
         actions: [
           IconButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
+              // Add search functionality here
             },
-            icon: const Icon(Icons.search_rounded),
+            icon: const Icon(Icons.search),
             tooltip: 'Search Notes',
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF64748B),
-            ),
           ),
-          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
+              // Add sort/filter options here
             },
-            icon: const Icon(Icons.tune_rounded),
-            tooltip: 'Filter Options',
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF64748B),
-            ),
+            icon: const Icon(Icons.sort),
+            tooltip: 'Sort Notes',
           ),
-          const SizedBox(width: 16),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            if (totalCount > 0) ...[
-              Container(
-                margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                child: _buildStatsCard(completedCount, totalCount),
-              ),
-            ],
+      body: Column(
+        children: [
+          // Stats Container
+          if (totalCount > 0) ...[
             Container(
-              height: 60,
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _filterOptions.length,
-                itemBuilder: (context, index) {
-                  final option = _filterOptions[index];
-                  final isSelected = _selectedFilter == option;
-                  return Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    child: _buildFilterChip(option, isSelected),
-                  );
-                },
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF036E41), Color(0xFF389C7B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF036E41).withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: filteredNotes.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                itemCount: filteredNotes.length,
-                itemBuilder: (context, index) {
-                  final note = filteredNotes[index];
-                  return _buildNoteCard(note, index);
-                },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Notes Overview',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '$completedCount of $totalCount completed',
+                          style: const TextStyle(
+                            color: Color(0xFFE8F5F0),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${((completedCount / totalCount) * 100).round()}%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-        ),
+
+          // Filter Chips
+          Container(
+            height: 50,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _filterOptions.length,
+              itemBuilder: (context, index) {
+                final option = _filterOptions[index];
+                final isSelected = _selectedFilter == option;
+                return Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(option),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedFilter = option;
+                      });
+                    },
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFF036E41).withOpacity(0.1),
+                    labelStyle: TextStyle(
+                      color: isSelected ? const Color(0xFF036E41) : const Color(0xFF424242),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF036E41)
+                          : const Color(0xFFE0E0E0),
+                    ),
+                    elevation: 0,
+                    pressElevation: 0,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Notes List
+          Expanded(
+            child: filteredNotes.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: filteredNotes.length,
+              itemBuilder: (context, index) {
+                final note = filteredNotes[index];
+                return _buildNoteCard(note);
+              },
+            ),
+          ),
+        ],
       ),
+      // Create Note Button
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Container(
         width: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 20),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
         child: FloatingActionButton.extended(
-          onPressed: _navigateToCreateNote,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NoteReminderPage(),
+              ),
+            );
+          },
           backgroundColor: const Color(0xFF036E41),
           foregroundColor: Colors.white,
-          elevation: 12,
+          elevation: 8,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           label: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_rounded, size: 24),
-              SizedBox(width: 12),
+              Icon(Icons.add, size: 24),
+              SizedBox(width: 8),
               Text(
-                'Create New Note',
+                'Create Note',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -312,443 +325,222 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildStatsCard(int completedCount, int totalCount) {
-    final percentage = ((completedCount / totalCount) * 100).round();
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF036E41), Color(0xFF10B981)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF036E41).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -4,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Progress Overview',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$completedCount of $totalCount notes completed',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: completedCount / totalCount,
-                    backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                    minHeight: 6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Column(
-              children: [
-                Text(
-                  '$percentage%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  'COMPLETE',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String option, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedFilter = option;
-        });
-        HapticFeedback.selectionClick();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF036E41) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF036E41) : const Color(0xFFE2E8F0),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: const Color(0xFF036E41).withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ]
-              : [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Text(
-          option,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF036E41).withOpacity(0.1),
-                  const Color(0xFF10B981).withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: const Color(0xFF389C7B).withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.note_add_rounded,
-              size: 80,
-              color: Color(0xFF036E41),
+              Icons.note_add,
+              size: 64,
+              color: Color(0xFF389C7B),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           const Text(
             'No notes found',
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A1A),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF212121),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             _selectedFilter == 'All'
-                ? 'Create your first note to get started\nwith organizing your tasks'
-                : 'No notes match the selected filter.\nTry selecting a different filter.',
+                ? 'Create your first note to get started'
+                : 'No notes match the selected filter',
             style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF64748B),
-              height: 1.5,
+              fontSize: 14,
+              color: Color(0xFF757575),
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 40),
-          if (_selectedFilter == 'All')
-            ElevatedButton.icon(
-              onPressed: _navigateToCreateNote,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Create Your First Note'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF036E41),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildNoteCard(NoteItem note, int index) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 300 + (index * 100)),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              child: _buildNoteCardContent(note),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNoteCardContent(NoteItem note) {
+  Widget _buildNoteCard(NoteItem note) {
     return Container(
-      decoration: BoxDecoration(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        elevation: 0,
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-            spreadRadius: -2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: note.isCompleted
+                ? const Color(0xFF389C7B).withOpacity(0.3)
+                : _getPriorityColor(note.priority).withOpacity(0.3),
+            width: 1.5,
           ),
-        ],
-        border: Border.all(
-          color: note.isCompleted
-              ? const Color(0xFF10B981).withOpacity(0.2)
-              : _getPriorityColor(note.priority).withOpacity(0.2),
-          width: 1.5,
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: _getCategoryColor(note.category).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // Category Icon
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _getCategoryColor(note.category).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getCategoryIcon(note.category),
+                      color: _getCategoryColor(note.category),
+                      size: 20,
+                    ),
                   ),
-                  child: Icon(
-                    _getCategoryIcon(note.category),
-                    color: _getCategoryColor(note.category),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        note.title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: note.isCompleted
-                              ? const Color(0xFF64748B)
-                              : const Color(0xFF1A1A1A),
-                          decoration: note.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getPriorityColor(note.priority).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: _getPriorityColor(note.priority),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  note.priority.name.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: _getPriorityColor(note.priority),
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
+                  const SizedBox(width: 12),
+
+                  // Title and Priority
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          note.title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: note.isCompleted
+                                ? const Color(0xFF424242)
+                                : const Color(0xFF212121),
+                            decoration: note.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
                           ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              _getCategoryName(note.category),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.3,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getPriorityColor(note.priority).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                note.priority.name.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getPriorityColor(note.priority),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 8),
+                            Text(
+                              _getCategoryName(note.category),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF757575),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Transform.scale(
-                  scale: 1.2,
-                  child: Checkbox(
+
+                  // Completion Checkbox
+                  Checkbox(
                     value: note.isCompleted,
                     onChanged: (value) => _toggleNoteCompletion(note.id),
-                    activeColor: const Color(0xFF10B981),
+                    activeColor: const Color(0xFF036E41),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    side: BorderSide(
-                      color: note.isCompleted
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFD1D5DB),
-                      width: 2,
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              note.content,
-              style: TextStyle(
-                fontSize: 15,
-                color: note.isCompleted
-                    ? const Color(0xFF94A3B8)
-                    : const Color(0xFF475569),
-                height: 1.5,
-                decoration: note.isCompleted
-                    ? TextDecoration.lineThrough
-                    : null,
+                ],
               ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+
+              const SizedBox(height: 12),
+
+              // Note Content
+              Text(
+                note.content,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: note.isCompleted
+                      ? const Color(0xFF757575)
+                      : const Color(0xFF424242),
+                  height: 1.4,
+                  decoration: note.isCompleted
+                      ? TextDecoration.lineThrough
+                      : null,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 12),
+
+              // Bottom Row with Date and Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
                       Icon(
-                        Icons.schedule_rounded,
+                        Icons.schedule,
                         size: 16,
-                        color: const Color(0xFF64748B),
+                        color: const Color(0xFF757575),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                       Text(
                         _formatScheduledDate(note.scheduledDate),
                         style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          color: Color(0xFF757575),
                         ),
                       ),
                     ],
                   ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => _navigateToEditNote(note),
-                      icon: const Icon(Icons.edit_rounded, size: 20),
-                      color: const Color(0xFF64748B),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        padding: const EdgeInsets.all(8),
-                        minimumSize: const Size(36, 36),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          // Navigate to edit note
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NoteReminderPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.edit, size: 18),
+                        color: const Color(0xFF757575),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => _showDeleteConfirmation(note),
-                      icon: const Icon(Icons.delete_rounded, size: 20),
-                      color: const Color(0xFFEF4444),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEF2F2),
-                        padding: const EdgeInsets.all(8),
-                        minimumSize: const Size(36, 36),
+                      IconButton(
+                        onPressed: () => _showDeleteConfirmation(note),
+                        icon: const Icon(Icons.delete, size: 18),
+                        color: Colors.red[400],
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -759,54 +551,20 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Delete Note',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to delete "${note.title}"? This action cannot be undone.',
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              height: 1.5,
-            ),
-          ),
+          title: const Text('Delete Note'),
+          content: Text('Are you sure you want to delete "${note.title}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF64748B),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
+              child: const Text('Cancel'),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _deleteNote(note.id);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Delete',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -834,15 +592,15 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
   IconData _getCategoryIcon(NoteCategory category) {
     switch (category) {
       case NoteCategory.medication:
-        return Icons.medication_rounded;
+        return Icons.medication;
       case NoteCategory.appointment:
-        return Icons.event_rounded;
+        return Icons.event;
       case NoteCategory.exercise:
-        return Icons.fitness_center_rounded;
+        return Icons.fitness_center;
       case NoteCategory.health:
-        return Icons.favorite_rounded;
+        return Icons.favorite;
       case NoteCategory.general:
-        return Icons.note_rounded;
+        return Icons.note;
     }
   }
 
@@ -851,13 +609,13 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
       case NoteCategory.medication:
         return const Color(0xFF036E41);
       case NoteCategory.appointment:
-        return const Color(0xFF0EA5E9);
+        return const Color(0xFF389C7B);
       case NoteCategory.exercise:
-        return const Color(0xFF8B5CF6);
+        return const Color(0xFF424242);
       case NoteCategory.health:
-        return const Color(0xFFEF4444);
+        return Colors.red[400]!;
       case NoteCategory.general:
-        return const Color(0xFF64748B);
+        return const Color(0xFF757575);
     }
   }
 
@@ -879,11 +637,11 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
   Color _getPriorityColor(NotePriority priority) {
     switch (priority) {
       case NotePriority.high:
-        return const Color(0xFFEF4444);
+        return Colors.red[400]!;
       case NotePriority.medium:
-        return const Color(0xFFF59E0B);
+        return Colors.orange[400]!;
       case NotePriority.low:
-        return const Color(0xFF10B981);
+        return Colors.green[400]!;
     }
   }
 }
@@ -911,7 +669,6 @@ class NoteItem {
   final DateTime scheduledDate;
   final bool isCompleted;
   final NotePriority priority;
-  final DateTime createdAt;
 
   NoteItem({
     required this.id,
@@ -921,7 +678,6 @@ class NoteItem {
     required this.scheduledDate,
     required this.isCompleted,
     required this.priority,
-    required this.createdAt,
   });
 
   NoteItem copyWith({
@@ -932,7 +688,6 @@ class NoteItem {
     DateTime? scheduledDate,
     bool? isCompleted,
     NotePriority? priority,
-    DateTime? createdAt,
   }) {
     return NoteItem(
       id: id ?? this.id,
@@ -942,7 +697,6 @@ class NoteItem {
       scheduledDate: scheduledDate ?? this.scheduledDate,
       isCompleted: isCompleted ?? this.isCompleted,
       priority: priority ?? this.priority,
-      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
