@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final String userName = "Alex Morgan";
+    final String userName = "Dexter Morgan";
     final double lastGlucose = 112.4;
     final DateTime lastReadingTime = DateTime.now().subtract(const Duration(minutes: 15));
     final String warningMessage = lastGlucose < 70

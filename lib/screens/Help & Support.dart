@@ -158,9 +158,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF6366F1),
-            Color(0xFF8B5CF6),
-            Color(0xFFA855F7),
+            Color(0xFF1E3A8A),
+            Color(0xFF3B82F6),
+            Color(0xFF06B6D4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -338,13 +338,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF6366F1).withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             subtitle,
             style: const TextStyle(
-              color: Color(0xFF6366F1),
+              color: Color(0xFF3B82F6),
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -381,7 +381,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
         'icon': Icons.feedback_rounded,
         'title': 'Send Feedback',
         'subtitle': 'Share your thoughts and suggestions',
-        'color': const Color(0xFF8B5CF6),
+        'color': const Color(0xFF06B6D4),
         'action': () => _sendFeedback(),
       },
     ];
@@ -492,7 +492,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6366F1).withOpacity(0.08),
+            color: const Color(0xFF3B82F6).withOpacity(0.08),
             blurRadius: 32,
             offset: const Offset(0, 8),
           ),
@@ -507,12 +507,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  color: const Color(0xFF3B82F6).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.contact_support_rounded,
-                  color: Color(0xFF6366F1),
+                  color: Color(0xFF3B82F6),
                   size: 24,
                 ),
               ),
@@ -534,7 +534,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
           const SizedBox(height: 16),
           _buildContactRow(Icons.location_on_rounded, '123 Health St, Medical City', const Color(0xFFF59E0B)),
           const SizedBox(height: 16),
-          _buildContactRow(Icons.schedule_rounded, 'Mon-Fri: 9AM-5PM EST', const Color(0xFF8B5CF6)),
+          _buildContactRow(Icons.schedule_rounded, 'Mon-Fri: 9AM-5PM EST', const Color(0xFF06B6D4)),
         ],
       ),
     );
@@ -718,7 +718,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with TickerProvid
             Text("Opening feedback form..."),
           ],
         ),
-        backgroundColor: Color(0xFF8B5CF6),
+        backgroundColor: Color(0xFF06B6D4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
         margin: EdgeInsets.all(16),
