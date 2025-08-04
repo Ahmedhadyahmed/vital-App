@@ -1,0 +1,2 @@
+[] Fix the blur behind the menu button
+[] Fix the graph
