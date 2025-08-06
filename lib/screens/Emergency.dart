@@ -205,9 +205,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> with 
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFFDC2626),
-            Color(0xFFEF4444),
-            Color(0xFFF87171),
+            Color(0xFF1E3A8A),
+            Color(0xFF3B82F6),
+            Color(0xFF06B6D4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -292,8 +292,8 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> with 
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color(0xFFDC2626),
             Color(0xFFEF4444),
+            Color(0xFFF87171),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -469,13 +469,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> with 
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFEF4444).withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             subtitle,
             style: const TextStyle(
-              color: Color(0xFFEF4444),
+              color: Color(0xFF3B82F6),
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -548,13 +548,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> with 
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444).withOpacity(0.1),
+                                color: const Color(0xFF3B82F6).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
                                 "PRIMARY",
                                 style: TextStyle(
-                                  color: Color(0xFFEF4444),
+                                  color: Color(0xFF3B82F6),
                                   fontWeight: FontWeight.w700,
                                   fontSize: 10,
                                   letterSpacing: 0.5,
@@ -925,7 +925,7 @@ class _AddContactModalState extends State<AddContactModal> {
                       Checkbox(
                         value: _isPrimary,
                         onChanged: (value) => setState(() => _isPrimary = value ?? false),
-                        activeColor: const Color(0xFFEF4444),
+                        activeColor: const Color(0xFF3B82F6),
                       ),
                       const Text(
                         "Set as primary emergency contact",

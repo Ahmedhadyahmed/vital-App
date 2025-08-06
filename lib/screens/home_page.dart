@@ -1,6 +1,4 @@
 import 'dart:ui';
-import 'dart:math';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,221 +11,6 @@ import 'Help & Support.dart';
 import 'MedicationsScreen.dart';
 import 'Notes.dart';
 import 'Settings.dart';
-
-// Notification Manager Class
-class NotificationManager {
-  static final NotificationManager _instance = NotificationManager._internal();
-  factory NotificationManager() => _instance;
-  NotificationManager._internal();
-
-  // Track exercise status
-  bool isExercising = false;
-  Timer? _exerciseTimer;
-  DateTime? _lastExerciseTime;
-
-  // Simulate glucose readings
-  double _currentGlucose = 112.4;
-  Timer? _glucoseTimer;
-  final Random _random = Random();
-
-  // Danger thresholds
-  static const double lowGlucoseThreshold = 70.0;
-  static const double highGlucoseThreshold = 180.0;
-  static const Duration exerciseInactivityThreshold = Duration(hours: 24);
-
-  // Callback to update notifications
-  Function(List<NotificationItem>)? _updateCallback;
-  List<NotificationItem> _notifications = [];
-
-  void initialize(Function(List<NotificationItem>) updateCallback) {
-    _updateCallback = updateCallback;
-
-    // Start glucose simulation
-    _glucoseTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      _simulateGlucoseChange();
-    });
-
-    // Start exercise monitoring
-    _exerciseTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      _checkExerciseInactivity();
-    });
-  }
-
-  void dispose() {
-    _glucoseTimer?.cancel();
-    _exerciseTimer?.cancel();
-  }
-
-  void _simulateGlucoseChange() {
-    // Simulate natural glucose fluctuations
-    final change = (_random.nextDouble() * 20) - 10; // -10 to +10
-    _currentGlucose += change;
-
-    // Add some randomness to readings
-    if (_random.nextDouble() < 0.1) {
-      _currentGlucose = _random.nextDouble() * 300; // Random spike/drop
-    }
-
-    // Clamp values to reasonable range
-    _currentGlucose = _currentGlucose.clamp(40.0, 300.0);
-
-    // Check for danger levels
-    _checkGlucoseLevels();
-  }
-
-  void _checkGlucoseLevels() {
-    if (_currentGlucose < lowGlucoseThreshold) {
-      _addDangerNotification(
-        "Low Glucose Alert!",
-        "Your glucose level is critically low (${_currentGlucose.toStringAsFixed(1)} mg/dL). Consume fast-acting carbs immediately.",
-        NotificationType.glucose,
-      );
-    }
-    else if (_currentGlucose > highGlucoseThreshold) {
-      _addDangerNotification(
-        "High Glucose Alert!",
-        "Your glucose level is dangerously high (${_currentGlucose.toStringAsFixed(1)} mg/dL). Take corrective action as directed.",
-        NotificationType.glucose,
-      );
-    }
-    else if (_currentGlucose > highGlucoseThreshold - 20) {
-      // Approaching high threshold
-      _addWarningNotification(
-        "Elevated Glucose Level",
-        "Your glucose is approaching high levels (${_currentGlucose.toStringAsFixed(1)} mg/dL). Monitor closely.",
-        NotificationType.glucose,
-      );
-    }
-    else if (_currentGlucose < lowGlucoseThreshold + 15) {
-      // Approaching low threshold
-      _addWarningNotification(
-        "Low Glucose Warning",
-        "Your glucose is approaching low levels (${_currentGlucose.toStringAsFixed(1)} mg/dL). Consider a snack.",
-        NotificationType.glucose,
-      );
-    }
-  }
-
-  void _checkExerciseInactivity() {
-    if (_lastExerciseTime == null) {
-      _addGeneralNotification(
-        "Exercise Reminder",
-        "You haven't recorded any exercise yet today. Physical activity helps regulate glucose levels.",
-        NotificationType.exercise,
-      );
-      return;
-    }
-
-    final timeSinceExercise = DateTime.now().difference(_lastExerciseTime!);
-
-    if (timeSinceExercise > exerciseInactivityThreshold) {
-      _addGeneralNotification(
-        "Exercise Reminder",
-        "It's been over 24 hours since your last exercise. Regular activity is important for your health.",
-        NotificationType.exercise,
-      );
-    }
-  }
-
-  void startExercise() {
-    isExercising = true;
-    _lastExerciseTime = DateTime.now();
-
-    // Add exercise notification
-    _addGeneralNotification(
-      "Exercise Started",
-      "Your exercise session has begun. Stay hydrated and monitor your glucose levels.",
-      NotificationType.exercise,
-    );
-  }
-
-  void stopExercise() {
-    if (!isExercising) return;
-
-    isExercising = false;
-    _lastExerciseTime = DateTime.now();
-
-    // Add completion notification
-    _addGeneralNotification(
-      "Exercise Completed",
-      "Great job completing your exercise session! Remember to check your glucose levels.",
-      NotificationType.exercise,
-    );
-  }
-
-  void _addDangerNotification(String title, String message, NotificationType type) {
-    // Avoid duplicate alerts for the same issue
-    final similarExists = _notifications.any((n) =>
-    n.title == title &&
-        DateTime.now().difference(n.timestamp) < const Duration(minutes: 5));
-
-    if (!similarExists) {
-      final newNotification = NotificationItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        message: message,
-        type: type,
-        timestamp: DateTime.now(),
-        isRead: false,
-        isCritical: true,
-      );
-
-      _addNotification(newNotification);
-    }
-  }
-
-  void _addWarningNotification(String title, String message, NotificationType type) {
-    final similarExists = _notifications.any((n) =>
-    n.title == title &&
-        DateTime.now().difference(n.timestamp) < const Duration(minutes: 15));
-
-    if (!similarExists) {
-      final newNotification = NotificationItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        message: message,
-        type: type,
-        timestamp: DateTime.now(),
-        isRead: false,
-        isCritical: false,
-      );
-
-      _addNotification(newNotification);
-    }
-  }
-
-  void _addGeneralNotification(String title, String message, NotificationType type) {
-    final newNotification = NotificationItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      message: message,
-      type: type,
-      timestamp: DateTime.now(),
-      isRead: false,
-      isCritical: false,
-    );
-
-    _addNotification(newNotification);
-  }
-
-  void _addNotification(NotificationItem notification) {
-    _notifications.insert(0, notification);
-
-    // Limit to 50 notifications
-    if (_notifications.length > 50) {
-      _notifications = _notifications.sublist(0, 50);
-    }
-
-    // Update UI
-    if (_updateCallback != null) {
-      _updateCallback!(_notifications);
-    }
-  }
-
-  double get currentGlucose => _currentGlucose;
-  DateTime? get lastExerciseTime => _lastExerciseTime;
-  List<NotificationItem> get notifications => _notifications;
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -243,25 +26,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _cardAnimation;
   late Animation<Offset> _slideAnimation;
 
-  // Use the notification manager
-  final NotificationManager notificationManager = NotificationManager();
-
-  // Move notifications to state so they can be updated
-  late List<NotificationItem> notifications;
-
   @override
   void initState() {
     super.initState();
-
-    // Initialize with empty notifications
-    notifications = [];
-
-    // Initialize notification manager with update callback
-    notificationManager.initialize((updatedNotifications) {
-      setState(() {
-        notifications = updatedNotifications;
-      });
-    });
 
     _headerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -305,28 +72,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    notificationManager.dispose();
     _headerAnimationController.dispose();
     _cardAnimationController.dispose();
     super.dispose();
   }
 
-  // Method to update notifications state
-  void _updateNotifications(List<NotificationItem> updatedNotifications) {
-    setState(() {
-      notifications = updatedNotifications;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final String userName = "Alex Morgan";
-    final double lastGlucose = notificationManager.currentGlucose;
-    final DateTime lastReadingTime = DateTime.now();
-    final String warningMessage = lastGlucose < NotificationManager.lowGlucoseThreshold
-        ? "Low glucose warning! Take action."
-        : lastGlucose > NotificationManager.highGlucoseThreshold
-        ? "High glucose warning! Take action."
+    final String userName = "Dexter Morgan";
+    final double lastGlucose = 112.4;
+    final DateTime lastReadingTime = DateTime.now().subtract(const Duration(minutes: 15));
+    final String warningMessage = lastGlucose < 70
+        ? "Low glucose warning!"
+        : lastGlucose > 180
+        ? "High glucose warning!"
         : "";
 
     final List<Note> notes = [
@@ -335,8 +94,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       Note(Icons.fitness_center, "Exercise", "30 min cardio session", DateTime.now().subtract(const Duration(days: 2))),
     ];
 
-    // Calculate unread count from state notifications
-    final int unreadCount = notifications.where((n) => !n.isRead).length;
+    final List<NotificationItem> notifications = [
+      NotificationItem(
+        id: "1",
+        title: "Medication Reminder",
+        message: "Time to take your evening insulin dose",
+        type: NotificationType.medication,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+        isRead: false,
+      ),
+      NotificationItem(
+        id: "2",
+        title: "Glucose Alert",
+        message: "Your glucose level is within normal range",
+        type: NotificationType.glucose,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+        isRead: false,
+      ),
+      NotificationItem(
+        id: "3",
+        title: "Exercise Reminder",
+        message: "Don't forget your daily 30-minute walk",
+        type: NotificationType.exercise,
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        isRead: true,
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
@@ -379,16 +162,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
-                  icon: unreadCount > 0
-                      ? Badge(
+                  icon: Badge(
                     backgroundColor: const Color(0xFFEF4444),
                     label: Text(
-                      "$unreadCount",
+                      "${notifications.where((n) => !n.isRead).length}",
                       style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                     child: const Icon(Icons.notifications_rounded, color: Colors.white),
-                  )
-                      : const Icon(Icons.notifications_rounded, color: Colors.white),
+                  ),
                   onPressed: () => _showNotificationsModal(context, notifications),
                 ),
               ),
@@ -410,6 +191,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
 
           // Content
+          // ADD THIS INSTEAD:
           SliverToBoxAdapter(
             child: AnimatedBuilder(
               animation: _cardAnimation,
@@ -435,14 +217,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 const SizedBox(height: 24),
                                 _buildQuickStatsRow(),
                                 const SizedBox(height: 24),
-                                // Removed horizontal padding for glucose section to make it wider
-                                _buildEnhancedGlucoseSection(
-                                    lastGlucose, lastReadingTime, warningMessage),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                                  child: _buildEnhancedGlucoseSection(
+                                      lastGlucose, lastReadingTime, warningMessage),
+                                ),
                                 const SizedBox(height: 24),
                                 _buildActionCards(),
                                 const SizedBox(height: 24),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
                                   child: _buildEnhancedNotesSection(notes),
                                 ),
                                 const SizedBox(height: 32),
@@ -457,6 +241,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               },
             ),
           ),
+
         ],
       ),
     );
@@ -585,13 +370,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Expanded(child: _buildQuickStatCard("Current Glucose", "${notificationManager.currentGlucose.toStringAsFixed(1)} mg/dL", Icons.monitor_heart_rounded, const Color(0xFF3B82F6))),
+          Expanded(child: _buildQuickStatCard("Today's Average", "118 mg/dL", Icons.trending_up_rounded, const Color(0xFF10B981))),
           const SizedBox(width: 12),
-          Expanded(child: _buildQuickStatCard("Exercise Status", notificationManager.isExercising ? "Active" : "Inactive", Icons.directions_run_rounded, notificationManager.isExercising ? const Color(0xFF10B981) : const Color(0xFFEF4444))),
+          Expanded(child: _buildQuickStatCard("Readings", "12", Icons.timeline_rounded, const Color(0xFF3B82F6))),
           const SizedBox(width: 12),
-          Expanded(child: _buildQuickStatCard("Last Exercise", notificationManager.lastExerciseTime != null
-              ? DateFormat('h:mm a').format(notificationManager.lastExerciseTime!)
-              : "N/A", Icons.timer_rounded, const Color(0xFFF59E0B))),
+          Expanded(child: _buildQuickStatCard("Streak", "7 days", Icons.local_fire_department_rounded, const Color(0xFFEF4444))),
         ],
       ),
     );
@@ -650,42 +433,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title row with left/right padding
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Glucose Monitoring",
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Glucose Monitoring",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3B82F6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                "Live",
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F2937),
+                  color: Color(0xFF3B82F6),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  "Live",
-                  style: TextStyle(
-                    color: Color(0xFF3B82F6),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
-        // Chart container spans full width with minimal horizontal padding
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0), // Minimal horizontal margin
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
@@ -700,14 +477,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.fromLTRB(12, 24, 12, 24), // Reduced horizontal padding for chart
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
                     SizedBox(height: 220, child: _buildEnhancedGlucoseChart()),
                     const SizedBox(height: 24),
-                    // Current reading info with normal padding
                     Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12.0), // Add back some margin for this section
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -811,23 +586,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          // Add action for warning
-                          notificationManager._addGeneralNotification(
-                            "Warning Acknowledged",
-                            "You acknowledged the glucose warning",
-                            NotificationType.general,
-                          );
-                        },
-                        child: const Text(
-                          "ACKNOWLEDGE",
-                          style: TextStyle(
-                            color: Color(0xFFEF4444),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -845,37 +603,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         children: [
           Expanded(
             child: _buildActionCard(
-              "Start Exercise",
-              "Begin your workout session",
-              Icons.directions_run_rounded,
-              const Color(0xFF10B981),
-                  () {
-                notificationManager.startExercise();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Exercise session started"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
+              "Log Reading",
+              "Add new glucose measurement",
+              Icons.add_circle_outline_rounded,
+              const Color(0xFF3B82F6),
+                  () {},
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _buildActionCard(
-              "Stop Exercise",
-              "End your current workout",
-              Icons.stop_circle_rounded,
-              const Color(0xFFEF4444),
-                  () {
-                notificationManager.stopExercise();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Exercise session completed"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
+              "Add Note",
+              "Record health observation",
+              Icons.note_add_rounded,
+              const Color(0xFF10B981),
+                  () {},
             ),
           ),
         ],
@@ -1072,13 +814,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEnhancedGlucoseChart() {
-    // Generate simulated glucose data
-    final values = List.generate(15, (index) {
-      final base = 110 + index * 2;
-      final variation = Random().nextInt(20) - 10;
-      return (base + variation).toDouble();
-    });
-
+    final values = [110, 140, 130, 112, 98, 105, 120, 115, 125, 118, 130, 140, 110, 95, 105];
     final maxValue = values.reduce((a, b) => a > b ? a : b).toDouble();
     final minValue = values.reduce((a, b) => a < b ? a : b).toDouble();
 
@@ -1093,14 +829,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Color _getStatusColor(double value) {
-    if (value < NotificationManager.lowGlucoseThreshold) return const Color(0xFFEF4444);
-    if (value > NotificationManager.highGlucoseThreshold) return const Color(0xFFF59E0B);
+    if (value < 70) return const Color(0xFFEF4444);
+    if (value > 180) return const Color(0xFFF59E0B);
     return const Color(0xFF10B981);
   }
 
   String _getStatusText(double value) {
-    if (value < NotificationManager.lowGlucoseThreshold) return "LOW";
-    if (value > NotificationManager.highGlucoseThreshold) return "HIGH";
+    if (value < 70) return "LOW";
+    if (value > 180) return "HIGH";
     return "NORMAL";
   }
 
@@ -1122,17 +858,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => NotificationsModal(
-        notifications: notifications,
-        onNotificationsChanged: _updateNotifications,
-      ),
+      builder: (context) => NotificationsModal(notifications: notifications),
     );
   }
 }
 
-// Enhanced Chart Painter - Updated with reduced padding for wider chart
+// Enhanced Chart Painter
 class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
-  final List<double> values;
+  final List<int> values;
   final double maxValue;
   final double minValue;
 
@@ -1144,99 +877,94 @@ class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
       ..shader = const LinearGradient(
         colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..strokeWidth = 3
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
-      ..style: PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-    ..shader = LinearGradient(
-    colors: [
-    const Color(0xFF3B82F6).withOpacity(0.2),
-    const Color(0xFF06B6D4).withOpacity(0.1),
-    const Color(0xFF06B6D4).withOpacity(0.05),
-    ],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-    ..style: PaintingStyle.fill;
+      ..shader = LinearGradient(
+        colors: [
+          const Color(0xFF3B82F6).withOpacity(0.2),
+          const Color(0xFF06B6D4).withOpacity(0.1),
+          const Color(0xFF06B6D4).withOpacity(0.05),
+        ],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
 
     final pointPaint = Paint()
-    ..color = Colors.white
-    ..style: PaintingStyle.fill;
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
 
     final pointBorderPaint = Paint()
-    ..shader = const LinearGradient(
-    colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
-    ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-    ..strokeWidth = 3
-    ..style: PaintingStyle.stroke;
-
-    // Reduced horizontal padding significantly
-    final hPadding = 20.0;
-    final width = size.width - (hPadding * 2);
-    final height = size.height;
-    final valueRange = maxValue - minValue;
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
 
     final path = Path();
-    final pointRadius = 4.0;
+    final pointRadius = 6.0;
+    final width = size.width - 40;
+    final height = size.height - 40;
+    final valueRange = maxValue - minValue;
 
-    // Calculate points from left to right
     final points = values.asMap().entries.map((entry) {
-    final i = entry.key;
-    final value = entry.value;
-    final x = hPadding + (width / (values.length - 1)) * i;
-    final y = height - ((value - minValue) / valueRange) * height;
-    return Offset(x, y);
+      final i = entry.key;
+      final value = entry.value;
+      final y = 20 + (height / (values.length - 1)) * i;
+      final x = 20 + ((value - minValue) / valueRange) * width;
+      return Offset(x, y);
     }).toList();
 
     if (points.isNotEmpty) {
-    path.moveTo(points.first.dx, points.first.dy);
+      path.moveTo(points.first.dx, points.first.dy);
 
-    for (int i = 0; i < points.length - 1; i++) {
-    final currentPoint = points[i];
-    final nextPoint = points[i + 1];
-    final controlPointDistance = (nextPoint.dx - currentPoint.dx) * 0.4;
+      for (int i = 0; i < points.length - 1; i++) {
+        final currentPoint = points[i];
+        final nextPoint = points[i + 1];
+        final controlPointDistance = (nextPoint.dy - currentPoint.dy) * 0.4;
 
-    final controlPoint1 = Offset(
-    currentPoint.dx + controlPointDistance,
-    currentPoint.dy,
-    );
+        final controlPoint1 = Offset(
+          currentPoint.dx,
+          currentPoint.dy + controlPointDistance,
+        );
 
-    final controlPoint2 = Offset(
-    nextPoint.dx - controlPointDistance,
-    nextPoint.dy,
-    );
+        final controlPoint2 = Offset(
+          nextPoint.dx,
+          nextPoint.dy - controlPointDistance,
+        );
 
-    path.cubicTo(
-    controlPoint1.dx, controlPoint1.dy,
-    controlPoint2.dx, controlPoint2.dy,
-    nextPoint.dx, nextPoint.dy,
-    );
+        path.cubicTo(
+          controlPoint1.dx, controlPoint1.dy,
+          controlPoint2.dx, controlPoint2.dy,
+          nextPoint.dx, nextPoint.dy,
+        );
+      }
     }
-    }
 
-    // Create fill path that goes to bottom of chart
     final fillPath = Path.from(path)
-    ..lineTo(points.last.dx, height)
-    ..lineTo(points.first.dx, height)
-    ..close();
+      ..lineTo(20, points.last.dy)
+      ..lineTo(20, points.first.dy)
+      ..close();
 
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
 
     for (final point in points) {
-    canvas.drawCircle(point, pointRadius, pointPaint);
-    canvas.drawCircle(point, pointRadius, pointBorderPaint);
+      canvas.drawCircle(point, pointRadius, pointPaint);
+      canvas.drawCircle(point, pointRadius, pointBorderPaint);
     }
 
-    // Horizontal grid lines
+    // Grid lines
     final gridPaint = Paint()
-    ..color = const Color(0xFF3B82F6).withOpacity(0.1)
-    ..strokeWidth = 1;
+      ..color = const Color(0xFF3B82F6).withOpacity(0.1)
+      ..strokeWidth = 1;
 
     for (int i = 1; i < 4; i++) {
-    final y = height * i / 4;
-    canvas.drawLine(Offset(hPadding, y), Offset(width + hPadding, y), gridPaint);
+      final x = 20 + width * i / 4;
+      canvas.drawLine(Offset(x, 20), Offset(x, height + 20), gridPaint);
     }
   }
 
@@ -1244,7 +972,7 @@ class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// Notification data models and other classes
+// Notification data models and other classes remain the same
 enum NotificationType {
   medication,
   glucose,
@@ -1261,7 +989,6 @@ class NotificationItem {
   final NotificationType type;
   final DateTime timestamp;
   final bool isRead;
-  final bool isCritical;
 
   NotificationItem({
     required this.id,
@@ -1270,19 +997,13 @@ class NotificationItem {
     required this.type,
     required this.timestamp,
     required this.isRead,
-    required this.isCritical,
   });
 }
 
 class NotificationsModal extends StatefulWidget {
   final List<NotificationItem> notifications;
-  final Function(List<NotificationItem>) onNotificationsChanged;
 
-  const NotificationsModal({
-    super.key,
-    required this.notifications,
-    required this.onNotificationsChanged,
-  });
+  const NotificationsModal({super.key, required this.notifications});
 
   @override
   State<NotificationsModal> createState() => _NotificationsModalState();
@@ -1308,12 +1029,9 @@ class _NotificationsModalState extends State<NotificationsModal> {
           type: notifications[index].type,
           timestamp: notifications[index].timestamp,
           isRead: true,
-          isCritical: notifications[index].isCritical,
         );
       }
     });
-    // Update the parent widget's notifications
-    widget.onNotificationsChanged(notifications);
   }
 
   void _markAllAsRead() {
@@ -1325,11 +1043,8 @@ class _NotificationsModalState extends State<NotificationsModal> {
         type: notification.type,
         timestamp: notification.timestamp,
         isRead: true,
-        isCritical: notification.isCritical,
       )).toList();
     });
-    // Update the parent widget's notifications
-    widget.onNotificationsChanged(notifications);
   }
 
   @override
@@ -1357,7 +1072,7 @@ class _NotificationsModalState extends State<NotificationsModal> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12,24,12,24),
+            padding: const EdgeInsets.all(24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1452,24 +1167,16 @@ class _NotificationsModalState extends State<NotificationsModal> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: notification.isRead
-            ? Colors.white
-            : notification.isCritical
-            ? const Color(0xFFFEF2F2)
-            : const Color(0xFFF0F9FF),
+        color: notification.isRead ? Colors.white : const Color(0xFF3B82F6).withOpacity(0.03),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: notification.isRead
               ? const Color(0xFFE5E7EB)
-              : notification.isCritical
-              ? const Color(0xFFFECACA)
-              : const Color(0xFFBAE6FD),
+              : const Color(0xFF3B82F6).withOpacity(0.2),
         ),
         boxShadow: notification.isRead ? null : [
           BoxShadow(
-            color: (notification.isCritical
-                ? const Color(0xFFFECACA)
-                : const Color(0xFFBAE6FD)).withOpacity(0.3),
+            color: const Color(0xFF3B82F6).withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1515,7 +1222,7 @@ class _NotificationsModalState extends State<NotificationsModal> {
                               notification.title,
                               style: TextStyle(
                                 fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w700,
-                                color: notification.isCritical ? const Color(0xFFEF4444) : const Color(0xFF1F2937),
+                                color: const Color(0xFF1F2937),
                                 fontSize: 16,
                               ),
                             ),
@@ -1524,8 +1231,8 @@ class _NotificationsModalState extends State<NotificationsModal> {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: BoxDecoration(
-                                color: notification.isCritical ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF3B82F6),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -1534,8 +1241,8 @@ class _NotificationsModalState extends State<NotificationsModal> {
                       const SizedBox(height: 6),
                       Text(
                         notification.message,
-                        style: TextStyle(
-                          color: notification.isCritical ? const Color(0xFFEF4444) : const Color(0xFF6B7280),
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
                           height: 1.4,
                           fontSize: 14,
                         ),
@@ -1634,11 +1341,12 @@ class _AppDrawer extends StatelessWidget {
           bottomRight: Radius.circular(24),
         ),
       ),
-      child: SafeArea(
+      child: SafeArea( // Add SafeArea to avoid system UI overlap
         child: Column(
           children: [
+            // Fixed height header
             Container(
-              height: 180,
+              height: 180, // Reduced from 200 to 180
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -1653,10 +1361,10 @@ class _AppDrawer extends StatelessWidget {
                   topRight: Radius.circular(24),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20), // Reduced padding
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
                 children: [
                   Container(
                     padding: const EdgeInsets.all(3),
@@ -1665,35 +1373,36 @@ class _AppDrawer extends StatelessWidget {
                       border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
                     ),
                     child: const CircleAvatar(
-                      radius: 25,
+                      radius: 25, // Reduced from 28 to 25
                       backgroundColor: Colors.white,
-                      child: Icon(Icons.person_rounded, size: 28, color: Color(0xFF3B82F6)),
+                      child: Icon(Icons.person_rounded, size: 28, color: Color(0xFF3B82F6)), // Reduced icon size
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 12), // Reduced spacing
                   const Text(
                     "VitalTracker",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 22, // Reduced font size
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 2), // Reduced spacing
                   Text(
                     "Health Monitoring",
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
-                      fontSize: 13,
+                      fontSize: 13, // Reduced font size
                     ),
                   ),
                 ],
               ),
             ),
+            // Flexible list that can scroll if needed
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 4), // Reduced padding
+                physics: const BouncingScrollPhysics(), // Add smooth scrolling
                 children: [
                   _buildDrawerItem(context, Icons.dashboard_rounded, "Dashboard", true, null),
                   _buildDrawerItem(context, Icons.analytics_rounded, "Analytics", false, null),
@@ -1716,7 +1425,7 @@ class _AppDrawer extends StatelessWidget {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SettingsScreen()));
                   }),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced padding
                     child: Divider(color: Color(0xFFE5E7EB)),
                   ),
                   _buildDrawerItem(context, Icons.help_rounded, "Help & Support", false, () {
@@ -1725,7 +1434,7 @@ class _AppDrawer extends StatelessWidget {
                   _buildDrawerItem(context, Icons.logout_rounded, "Logout", false, () {
                     Navigator.pushReplacementNamed(context, '/login');
                   }),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 16), // Add bottom padding for better spacing
                 ],
               ),
             ),
@@ -1737,14 +1446,14 @@ class _AppDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(BuildContext context, IconData icon, String title, [bool isSelected = false, VoidCallback? onTap]) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1), // Reduced vertical margin
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap ?? () {},
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Reduced vertical padding
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.1) : null,
               borderRadius: BorderRadius.circular(16),
@@ -1752,7 +1461,7 @@ class _AppDrawer extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(7),
+                  padding: const EdgeInsets.all(7), // Slightly reduced padding
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF3B82F6).withOpacity(0.2)
@@ -1762,17 +1471,17 @@ class _AppDrawer extends StatelessWidget {
                   child: Icon(
                     icon,
                     color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF6B7280),
-                    size: 18,
+                    size: 18, // Slightly reduced icon size
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
+                const SizedBox(width: 14), // Reduced spacing
+                Expanded( // Add Expanded to prevent overflow
                   child: Text(
                     title,
                     style: TextStyle(
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected ? const Color(0xFF1F2937) : const Color(0xFF6B7280),
-                      fontSize: 15,
+                      fontSize: 15, // Slightly reduced font size
                     ),
                   ),
                 ),
