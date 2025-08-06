@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -26,9 +27,40 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _cardAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // Add state management for notifications
+  late List<NotificationItem> _notifications;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize notifications
+    _notifications = [
+      NotificationItem(
+        id: "1",
+        title: "Medication Reminder",
+        message: "Time to take your evening insulin dose",
+        type: NotificationType.medication,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+        isRead: false,
+      ),
+      NotificationItem(
+        id: "2",
+        title: "Glucose Alert",
+        message: "Your glucose level is within normal range",
+        type: NotificationType.glucose,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+        isRead: false,
+      ),
+      NotificationItem(
+        id: "3",
+        title: "Exercise Reminder",
+        message: "Don't forget your daily 30-minute walk",
+        type: NotificationType.exercise,
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        isRead: true,
+      ),
+    ];
 
     _headerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -77,6 +109,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // Method to update notifications state
+  void _updateNotifications(List<NotificationItem> updatedNotifications) {
+    setState(() {
+      _notifications = updatedNotifications;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final String userName = "Dexter Morgan";
@@ -92,33 +131,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       Note(Icons.free_breakfast_outlined, "Breakfast", "Took 8 units insulin with meal", DateTime.now().subtract(const Duration(hours: 2))),
       Note(Icons.medication_liquid, "Medication", "Morning dose completed", DateTime.now().subtract(const Duration(days: 1))),
       Note(Icons.fitness_center, "Exercise", "30 min cardio session", DateTime.now().subtract(const Duration(days: 2))),
-    ];
-
-    final List<NotificationItem> notifications = [
-      NotificationItem(
-        id: "1",
-        title: "Medication Reminder",
-        message: "Time to take your evening insulin dose",
-        type: NotificationType.medication,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-        isRead: false,
-      ),
-      NotificationItem(
-        id: "2",
-        title: "Glucose Alert",
-        message: "Your glucose level is within normal range",
-        type: NotificationType.glucose,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-        isRead: false,
-      ),
-      NotificationItem(
-        id: "3",
-        title: "Exercise Reminder",
-        message: "Don't forget your daily 30-minute walk",
-        type: NotificationType.exercise,
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        isRead: true,
-      ),
     ];
 
     return Scaffold(
@@ -165,12 +177,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   icon: Badge(
                     backgroundColor: const Color(0xFFEF4444),
                     label: Text(
-                      "${notifications.where((n) => !n.isRead).length}",
+                      "${_notifications.where((n) => !n.isRead).length}",
                       style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                     child: const Icon(Icons.notifications_rounded, color: Colors.white),
                   ),
-                  onPressed: () => _showNotificationsModal(context, notifications),
+                  onPressed: () => _showNotificationsModal(context),
                 ),
               ),
             ],
@@ -191,7 +203,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
 
           // Content
-          // ADD THIS INSTEAD:
           SliverToBoxAdapter(
             child: AnimatedBuilder(
               animation: _cardAnimation,
@@ -480,7 +491,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    SizedBox(height: 220, child: _buildEnhancedGlucoseChart()),
+                    SizedBox(height: 220, width: double.infinity, child: _buildEnhancedGlucoseChart()),
                     const SizedBox(height: 24),
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -853,23 +864,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _showNotificationsModal(BuildContext context, List<NotificationItem> notifications) {
+  void _showNotificationsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => NotificationsModal(notifications: notifications),
+      builder: (context) => NotificationsModal(
+        notifications: _notifications,
+        onNotificationsUpdate: _updateNotifications,
+      ),
     );
   }
 }
 
-// Enhanced Chart Painter
+// Enhanced Chart Painter with wider chart
 class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
   final List<int> values;
   final double maxValue;
   final double minValue;
 
-  EnhancedHorizontalGlucoseChartPainter(this.values, this.maxValue, this.minValue);
+  EnhancedHorizontalGlucoseChartPainter(List<int> values, double? maxVal, double? minVal)
+      : values = values,
+        maxValue = maxVal ?? (values.reduce(max) + 10),
+        minValue = minVal ?? (values.reduce(min) - 10);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -888,8 +905,8 @@ class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
           const Color(0xFF06B6D4).withOpacity(0.1),
           const Color(0xFF06B6D4).withOpacity(0.05),
         ],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
 
@@ -910,32 +927,37 @@ class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
     final height = size.height - 40;
     final valueRange = maxValue - minValue;
 
+    // Convert values to points (left to right progression)
     final points = values.asMap().entries.map((entry) {
       final i = entry.key;
       final value = entry.value;
-      final y = 20 + (height / (values.length - 1)) * i;
-      final x = 20 + ((value - minValue) / valueRange) * width;
-      return Offset(x, y);
+      final x = (width / (values.length - 1)) * i; // Time progresses left to right
+      final y = height - ((value - minValue) / valueRange) * height; // Glucose values vertically inverted
+      return Offset(x + 20, y + 20); // Add padding offset
     }).toList();
 
+    // Create curved path using cubic bezier curves
     if (points.isNotEmpty) {
       path.moveTo(points.first.dx, points.first.dy);
 
       for (int i = 0; i < points.length - 1; i++) {
         final currentPoint = points[i];
         final nextPoint = points[i + 1];
-        final controlPointDistance = (nextPoint.dy - currentPoint.dy) * 0.4;
+
+        // Calculate control points for smooth curve (horizontal progression)
+        final controlPointDistance = (nextPoint.dx - currentPoint.dx) * 0.4;
 
         final controlPoint1 = Offset(
-          currentPoint.dx,
-          currentPoint.dy + controlPointDistance,
+          currentPoint.dx + controlPointDistance,
+          currentPoint.dy,
         );
 
         final controlPoint2 = Offset(
-          nextPoint.dx,
-          nextPoint.dy - controlPointDistance,
+          nextPoint.dx - controlPointDistance,
+          nextPoint.dy,
         );
 
+        // Create cubic bezier curve
         path.cubicTo(
           controlPoint1.dx, controlPoint1.dy,
           controlPoint2.dx, controlPoint2.dy,
@@ -944,27 +966,30 @@ class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
       }
     }
 
+    // Create fill path for gradient area (fill from bottom)
     final fillPath = Path.from(path)
-      ..lineTo(20, points.last.dy)
-      ..lineTo(20, points.first.dy)
+      ..lineTo(points.last.dx, height + 20)
+      ..lineTo(points.first.dx, height + 20)
       ..close();
 
+    // Draw fill area and curved line
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
 
+    // Draw data points
     for (final point in points) {
       canvas.drawCircle(point, pointRadius, pointPaint);
       canvas.drawCircle(point, pointRadius, pointBorderPaint);
     }
 
-    // Grid lines
+    // Draw horizontal grid lines (for glucose values)
     final gridPaint = Paint()
       ..color = const Color(0xFF3B82F6).withOpacity(0.1)
       ..strokeWidth = 1;
 
     for (int i = 1; i < 4; i++) {
-      final x = 20 + width * i / 4;
-      canvas.drawLine(Offset(x, 20), Offset(x, height + 20), gridPaint);
+      final y = (height / 4) * i + 20;
+      canvas.drawLine(Offset(20, y), Offset(width + 20, y), gridPaint);
     }
   }
 
@@ -972,7 +997,7 @@ class EnhancedHorizontalGlucoseChartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// Notification data models and other classes remain the same
+// Notification data models and other classes
 enum NotificationType {
   medication,
   glucose,
@@ -998,12 +1023,36 @@ class NotificationItem {
     required this.timestamp,
     required this.isRead,
   });
+
+  // Add copyWith method for easier state updates
+  NotificationItem copyWith({
+    String? id,
+    String? title,
+    String? message,
+    NotificationType? type,
+    DateTime? timestamp,
+    bool? isRead,
+  }) {
+    return NotificationItem(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      message: message ?? this.message,
+      type: type ?? this.type,
+      timestamp: timestamp ?? this.timestamp,
+      isRead: isRead ?? this.isRead,
+    );
+  }
 }
 
 class NotificationsModal extends StatefulWidget {
   final List<NotificationItem> notifications;
+  final Function(List<NotificationItem>) onNotificationsUpdate;
 
-  const NotificationsModal({super.key, required this.notifications});
+  const NotificationsModal({
+    super.key,
+    required this.notifications,
+    required this.onNotificationsUpdate,
+  });
 
   @override
   State<NotificationsModal> createState() => _NotificationsModalState();
@@ -1022,29 +1071,29 @@ class _NotificationsModalState extends State<NotificationsModal> {
     setState(() {
       final index = notifications.indexWhere((n) => n.id == notificationId);
       if (index != -1) {
-        notifications[index] = NotificationItem(
-          id: notifications[index].id,
-          title: notifications[index].title,
-          message: notifications[index].message,
-          type: notifications[index].type,
-          timestamp: notifications[index].timestamp,
-          isRead: true,
-        );
+        notifications[index] = notifications[index].copyWith(isRead: true);
       }
     });
+    // Update parent widget
+    widget.onNotificationsUpdate(notifications);
   }
 
   void _markAllAsRead() {
     setState(() {
-      notifications = notifications.map((notification) => NotificationItem(
-        id: notification.id,
-        title: notification.title,
-        message: notification.message,
-        type: notification.type,
-        timestamp: notification.timestamp,
-        isRead: true,
-      )).toList();
+      notifications = notifications.map((notification) =>
+          notification.copyWith(isRead: true)
+      ).toList();
     });
+    // Update parent widget
+    widget.onNotificationsUpdate(notifications);
+  }
+
+  void _removeNotification(String notificationId) {
+    setState(() {
+      notifications.removeWhere((n) => n.id == notificationId);
+    });
+    // Update parent widget
+    widget.onNotificationsUpdate(notifications);
   }
 
   @override
@@ -1089,7 +1138,9 @@ class _NotificationsModalState extends State<NotificationsModal> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "$unreadCount unread notifications",
+                      unreadCount > 0
+                          ? "$unreadCount unread notification${unreadCount > 1 ? 's' : ''}"
+                          : "All caught up!",
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
@@ -1164,102 +1215,135 @@ class _NotificationsModalState extends State<NotificationsModal> {
   }
 
   Widget _buildNotificationItem(NotificationItem notification) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: notification.isRead ? Colors.white : const Color(0xFF3B82F6).withOpacity(0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: notification.isRead
-              ? const Color(0xFFE5E7EB)
-              : const Color(0xFF3B82F6).withOpacity(0.2),
-        ),
-        boxShadow: notification.isRead ? null : [
-          BoxShadow(
-            color: const Color(0xFF3B82F6).withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return Dismissible(
+      key: Key(notification.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        _removeNotification(notification.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Notification dismissed'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                // You could implement undo functionality here
+              },
+            ),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (!notification.isRead) {
-              _markAsRead(notification.id);
-            }
-          },
+        );
+      },
+
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEF4444),
           borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _getNotificationTypeColor(notification.type).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _getNotificationTypeColor(notification.type).withOpacity(0.2),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(
+          Icons.delete_rounded,
+          color: Colors.white,
+          size: 24,
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: notification.isRead ? Colors.white : const Color(0xFF3B82F6).withOpacity(0.03),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: notification.isRead
+                ? const Color(0xFFE5E7EB)
+                : const Color(0xFF3B82F6).withOpacity(0.2),
+          ),
+          boxShadow: notification.isRead ? null : [
+            BoxShadow(
+              color: const Color(0xFF3B82F6).withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (!notification.isRead) {
+                _markAsRead(notification.id);
+              }
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _getNotificationTypeColor(notification.type).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _getNotificationTypeColor(notification.type).withOpacity(0.2),
+                      ),
+                    ),
+                    child: Icon(
+                      _getNotificationTypeIcon(notification.type),
+                      color: _getNotificationTypeColor(notification.type),
+                      size: 20,
                     ),
                   ),
-                  child: Icon(
-                    _getNotificationTypeIcon(notification.type),
-                    color: _getNotificationTypeColor(notification.type),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              notification.title,
-                              style: TextStyle(
-                                fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w700,
-                                color: const Color(0xFF1F2937),
-                                fontSize: 16,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                notification.title,
+                                style: TextStyle(
+                                  fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w700,
+                                  color: const Color(0xFF1F2937),
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
+                            if (!notification.isRead)
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF3B82F6),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          notification.message,
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            height: 1.4,
+                            fontSize: 14,
                           ),
-                          if (!notification.isRead)
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF3B82F6),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        notification.message,
-                        style: const TextStyle(
-                          color: Color(0xFF6B7280),
-                          height: 1.4,
-                          fontSize: 14,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _formatTimestamp(notification.timestamp),
-                        style: const TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 8),
+                        Text(
+                          _formatTimestamp(notification.timestamp),
+                          style: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1329,7 +1413,7 @@ class Note {
 }
 
 class _AppDrawer extends StatelessWidget {
-  const _AppDrawer({super.key});
+  const _AppDrawer();
 
   @override
   Widget build(BuildContext context) {
