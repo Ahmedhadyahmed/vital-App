@@ -1,13 +1,19 @@
-[] Fix the blur behind the menu button
+//Ahmed
 [X] Fix the graph
 [x] Fix the logical error of the notification number on the icon
 [] Make the notification dynamics not static been written by the developers
 []After finish the app evey screen should be separated to parts {classes,interface,etc...}
+[] Add the missed logic in the app
 
 
 
+//(Seif)
+[]Add the Analytics Screen to the app
+[] Add the missed logic in the app
+[] edit the them of all screen to be the same depending on color palate Ahmed said
 
-//ziad
 
+
+//Ziad
 [] create the backend db for the app
 [] connect it to the screen ex:(make the medication screen save its components into the db) + make sure its appear in MedicationsScreen
