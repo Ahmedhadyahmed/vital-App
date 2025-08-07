@@ -2,6 +2,12 @@
 [X] Fix the graph
 [x] Fix the logical error of the notification number on the icon
 [] Make the notification dynamics not static been written by the developers
-
-
 []After finish the app evey screen should be separated to parts {classes,interface,etc...}
+
+
+
+
+//ziad
+
+[] create the backend db for the app
+[] connect it to the screen ex:(make the medication screen save its components into the db) + make sure its appear in MedicationsScreen
