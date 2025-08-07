@@ -847,8 +847,8 @@ class _NotesListScreenState extends State<NotesListScreen> with TickerProviderSt
                   style: TextStyle(
                     fontSize: 15,
                     color: note.isCompleted
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF6B7280),
+                        ? const Color(0xFF000000)
+                        : const Color(0xFF000000),
                     height: 1.5,
                     decoration: note.isCompleted
                         ? TextDecoration.lineThrough
